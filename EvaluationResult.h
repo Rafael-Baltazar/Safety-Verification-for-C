@@ -12,7 +12,7 @@ typedef enum {
 class EvaluationResult {
 private:
     EvalResultType resultType;
-    Z3_ast *tree;
+    Z3_ast ast;
 public:
     EvaluationResult() {
         resultType = Error;
@@ -22,9 +22,9 @@ public:
         resultType = type;
     }
 
-    EvaluationResult(Z3_ast *t) {
+    EvaluationResult(Z3_ast a) {
         resultType = Ok;
-        tree = t;
+        ast = a;
     }
 
     bool isOk() {
@@ -32,7 +32,7 @@ public:
     }
 
     Z3_ast *getAst() {
-        return tree;
+        return &ast;
     }
 
     EvalResultType getType() {

@@ -39,8 +39,7 @@ private:
                 Z3_ast args[2];
                 args[0] = *(left->getAst());
                 args[1] = *(right->getAst());
-                Z3_ast a = Z3_mk_add(*ctx, 2, args);
-                result = new EvaluationResult(&a);
+                result = new EvaluationResult(Z3_mk_add(*ctx, 2, args));
             } else {
                 result = new EvaluationResult(Error);
             }
@@ -52,8 +51,7 @@ private:
                 Z3_ast args[2];
                 args[0] = *(left->getAst());
                 args[1] = *(right->getAst());
-                Z3_ast a = Z3_mk_sub(*ctx, 2, args);
-                result = new EvaluationResult(&a);
+                result = new EvaluationResult(Z3_mk_sub(*ctx, 2, args));
             } else {
                 result = new EvaluationResult(Error);
             }
@@ -65,8 +63,7 @@ private:
                 Z3_ast args[2];
                 args[0] = *(left->getAst());
                 args[1] = *(right->getAst());
-                Z3_ast a = Z3_mk_mul(*ctx, 2, args);
-                result = new EvaluationResult(&a);
+                result = new EvaluationResult(Z3_mk_mul(*ctx, 2, args));
             } else {
                 result = new EvaluationResult(Error);
             }
@@ -78,28 +75,25 @@ private:
                 Z3_ast args[2];
                 args[0] = *(left->getAst());
                 args[1] = *(right->getAst());
-                Z3_ast a = Z3_mk_div(*ctx, args[0], args[1]);
-                result = new EvaluationResult(&a);
+                result = new EvaluationResult(Z3_mk_div(*ctx, args[0], args[1]));
             } else {
                 result = new EvaluationResult(Error);
             }
         } else if(type == ConExpr) {
             cout << expr->getVal() << " val\n";
             const char *val = toString(expr->getVal()).c_str();
-            Z3_ast a = Z3_mk_numeral(*ctx, val, *realSort);
-            result = new EvaluationResult(&a);
+            result = new EvaluationResult(Z3_mk_numeral(*ctx, val, *realSort));
         } else if(type == VarExpr) {
             string declaredName = expr->getVar()->getName();
             cout << declaredName << " dn, ";
             string concreteName = substitution->findConcreteName(declaredName);
             cout << concreteName << " cn\n";
             const char *var = concreteName.c_str();
-            Z3_ast a = Z3_mk_const(*ctx, Z3_mk_string_symbol(*ctx, var), *realSort);
-            result = new EvaluationResult(&a);
+            result = new EvaluationResult(Z3_mk_const(*ctx, Z3_mk_string_symbol(*ctx, var), *realSort));
         } else {
             result = new EvaluationResult(Error);
         }
-        cout << "Finished evaluating expression\n";
+cout << result << "\n";
         return result;
     }
 public:
@@ -115,45 +109,51 @@ public:
 
     EvaluationResult *evalClause(ClauseNode *clause){
         cout << "Evaluating clause\n";
-        EvaluationResult *result;
         if(clause->getUseCount() > threshold) {
-            result = new EvaluationResult(LoopUnrollThreshold);
-        } else {
-            vector<EvaluationResult*> *results = new vector<EvaluationResult*>();
-            vector<Node*> *nodes = clause->getNodes();
-            for(vector<Node*>::iterator it = nodes->begin(); it != nodes->end(); it++) {
-                Node *node = *it;
-                EvaluationResult *result = eval(node);
-                EvalResultType type = result->getType();
-                if(type == Ok) {
-                    results->push_back(result);
-                } else if(type == Error) {
-                    cout << "Finished evaluating clause: Error\n";
-                    return new EvaluationResult(Error);
-                }
-            }
-            if(results->size() > 0) {
-                Z3_ast *args = new Z3_ast[results->size()];
-                uint i = 0;
-                for(vector<EvaluationResult*>::iterator it = results->begin(); it != results->end() && i < results->size(); it++, i++) {
-                    EvaluationResult *eR = *it;
-                    Z3_ast *a = eR->getAst();
-                    args[i] = *a;
-                }
-                Z3_ast a = Z3_mk_or(*ctx, results->size(), args);
-                result = new EvaluationResult(&a);
-            } else {
-                cout << "Finished evaluating clause: all sub-nodes are loopUnrollThreshold\n";
-                return new EvaluationResult(LoopUnrollThreshold);
+            cout << "Evaluated  clause: LoopUnrollThreshold\n";
+            return new EvaluationResult(LoopUnrollThreshold);
+        }
+
+        vector<EvaluationResult*> *results = new vector<EvaluationResult*>();
+        vector<Node*> *nodes = clause->getNodes();
+        for(vector<Node*>::iterator it = nodes->begin(); it != nodes->end(); it++) {
+            Node *node = *it;
+            EvaluationResult *result = eval(node);
+            EvalResultType type = result->getType();
+            if(type == Ok) {
+                results->push_back(result);
+            } else if(type == Error) {
+                cout << "Evaluated  clause: Error\n";
+                return new EvaluationResult(Error);
             }
         }
-        cout << "Finished evaluating clause\n";
-        return result;
+
+        if(results->size() == 0) {
+            cout << "Evaluated  clause: all sub-nodes are loopUnrollThreshold\n";
+            return new EvaluationResult(LoopUnrollThreshold);
+        }
+
+        cout << "Ok nodes: " << results->size() << "\n";
+        Z3_ast args[2], *prev = NULL;// not in heap
+        for(vector<EvaluationResult*>::iterator it = results->begin(); it != results->end(); it++) {
+            EvaluationResult *eR = *it;
+            Z3_ast *a = eR->getAst();
+cout << "bexpr: " << *a << "\n";
+            if(prev != NULL) {
+                args[0] = *prev;
+                args[1] = *a;
+                *a = Z3_mk_or(*ctx, 2, args);
+            }
+            prev = a;
+        }
+        cout << "Evaluated  clause\n";
+        return new EvaluationResult(*prev);
     }
 
     EvaluationResult *evalConjunction(ConjunctionNode *conjunction){
         cout << "Evaluating conjunction\n";
         vector<Node*> *nodes = conjunction->getNodes();
+        cout << "Nodes: " << nodes->size() << "\n";
         Z3_ast *args = new Z3_ast[nodes->size()];
         uint i = 0;
         for(vector<Node*>::iterator it = nodes->begin(); it != nodes->end() && i < nodes->size(); it++, i++) {
@@ -163,18 +163,22 @@ public:
             if(type == Ok) {
                 Z3_ast *a = result->getAst();
                 args[i] = *a;
+cout << "after indexing args: " << i << ": " << args[i] << "\n";
             } else if(type == LoopUnrollThreshold) {
-                cout << "Finished evaluating conjunction: loopUnrollThreshold\n";
+                cout << "Evaluated  conjunction: loopUnrollThreshold\n";
                 return new EvaluationResult(LoopUnrollThreshold);
             } else {
-                cout << "Finished evaluating conjunction: Error\n";
+                cout << "Evaluated  conjunction: Error\n";
                 return new EvaluationResult(Error);
             }
         }
-
-        Z3_ast a = Z3_mk_and(*ctx, nodes->size(), args);
-        cout << "Finished evaluating conjunction\n";
-        return new EvaluationResult(&a);
+        if(nodes->size() > 1) {
+            cout << "Evaluated  conjunction and\n";
+            return new EvaluationResult(Z3_mk_and(*ctx, nodes->size(), args));
+        } else {
+            cout << "Evaluated  conjunction single\n";
+            return new EvaluationResult(args[0]);
+        }
     }
 
     // pre: boolean->getBExpr()->getType != ClBExpr
@@ -191,8 +195,7 @@ public:
             if(left->isOk() && right->isOk()) {
                 Z3_ast *la = left->getAst();
                 Z3_ast *ra = right->getAst();
-                Z3_ast a = Z3_mk_eq(*ctx, *la, *ra);
-                result = new EvaluationResult(&a);
+                result = new EvaluationResult(Z3_mk_eq(*ctx, *la, *ra));
             } else {
                 result = new EvaluationResult(Error);
             }
@@ -203,8 +206,7 @@ public:
             if(left->isOk() && right->isOk()) {
                 Z3_ast *la = left->getAst();
                 Z3_ast *ra = right->getAst();
-                Z3_ast a = Z3_mk_not(*ctx, Z3_mk_eq(*ctx, *la, *ra));
-                result = new EvaluationResult(&a);
+                result = new EvaluationResult(Z3_mk_not(*ctx, Z3_mk_eq(*ctx, *la, *ra)));
             } else {
                 result = new EvaluationResult(Error);
             }
@@ -215,8 +217,7 @@ public:
             if(left->isOk() && right->isOk()) {
                 Z3_ast *la = left->getAst();
                 Z3_ast *ra = right->getAst();
-                Z3_ast a = Z3_mk_lt(*ctx, *la, *ra);
-                result = new EvaluationResult(&a);
+                result = new EvaluationResult(Z3_mk_lt(*ctx, *la, *ra));
             } else {
                 result = new EvaluationResult(Error);
             }
@@ -227,8 +228,7 @@ public:
             if(left->isOk() && right->isOk()) {
                 Z3_ast *la = left->getAst();
                 Z3_ast *ra = right->getAst();
-                Z3_ast a = Z3_mk_gt(*ctx, *la, *ra);
-                result = new EvaluationResult(&a);
+                result = new EvaluationResult(Z3_mk_gt(*ctx, *la, *ra));
             } else {
                 result = new EvaluationResult(Error);
             }
@@ -238,9 +238,10 @@ public:
             right = evalExpr(bexpr->getRight(), substitution);
             if(left->isOk() && right->isOk()) {
                 Z3_ast *la = left->getAst();
+cout << "left: " << *la << "\n";
                 Z3_ast *ra = right->getAst();
-                Z3_ast a = Z3_mk_le(*ctx, *la, *ra);
-                result = new EvaluationResult(&a);
+cout << "right: " << *ra << "\n";
+                result = new EvaluationResult(Z3_mk_le(*ctx, *la, *ra));
             } else {
                 result = new EvaluationResult(Error);
             }
@@ -251,15 +252,14 @@ public:
             if(left->isOk() && right->isOk()) {
                 Z3_ast *la = left->getAst();
                 Z3_ast *ra = right->getAst();
-                Z3_ast a = Z3_mk_ge(*ctx, *la, *ra);
-                result = new EvaluationResult(&a);
+                result = new EvaluationResult(Z3_mk_ge(*ctx, *la, *ra));
             } else {
                 result = new EvaluationResult(Error);
             }
         } else {
             result = new EvaluationResult(Error);
         }
-        cout << "Finished evaluating boolean\n";
+        cout << "Evaluated  boolean\n";
         return result;
     }
 };

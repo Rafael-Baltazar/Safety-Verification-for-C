@@ -20,7 +20,7 @@ private:
 
     string createFreeVar() {
         string newVar = "v" + toString(*nFree);
-//        cout << "Created var: " << newVar << "\n";
+        cout << "Created var: " << newVar << "\n";
         (*nFree)++;
         return newVar;
     }
@@ -47,19 +47,15 @@ public:
     }
 
     string findConcreteName(string declaredName) {
-//        cout << "Finding concrete name for: " << declaredName << "\n";
         if(boundVars->count(declaredName) > 0) {
             string concreteName = (*boundVars)[declaredName];
-//            cout << "Found bound name: " << concreteName << "\n";
             return concreteName;
         } else if(vars->count(declaredName) > 0) {
             string concreteName = (*vars)[declaredName];
-//            cout << "Found free name: " << concreteName << "\n";
             return concreteName;
         } else {
             string newVar = createFreeVar();
             (*vars)[declaredName] = newVar;
-//            cout << "Found new name: " << newVar << "\n";
             return newVar;
         }
     }

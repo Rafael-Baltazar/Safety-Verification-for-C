@@ -31,7 +31,9 @@ Z3_lbool checkZ3(Z3_context &ctx, Z3_ast &ast) {
 
 int main(int argc, char* argv[])
 {
-    int threshold = (argc > 0)?atoi(argv[0]) + 1:2;
+//    int threshold = (argc > 0)?atoi(argv[0]) + 1:10;
+    int threshold = 3;
+    cout << "Loop unroll threshold: " << threshold << "\n";
     Z3_config cfg;
     Z3_context ctx;
     Z3_sort realSort, boolSort;
