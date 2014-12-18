@@ -20,7 +20,7 @@ private:
 
     string createFreeVar() {
         string newVar = "v" + toString(*nFree);
-        cout << "Created var: " << newVar << "\n";
+if(DEBUG)cout << "Created var: " << newVar << "\n";
         (*nFree)++;
         return newVar;
     }
@@ -61,7 +61,7 @@ public:
     }
 
     void addSub(string concrete, string declared) {
-        cout << "Adding sub for concrete: " << concrete << " and declared: " << declared << "\n";
+if(DEBUG)cout << "Adding sub for concrete: " << concrete << " and declared: " << declared << "\n";
         (*boundVars)[declared] = concrete;
     }
 
@@ -71,7 +71,7 @@ public:
      * for each Variable in c: findSub(var->name());
      */
     Substitution *createChild(BExpr *bexpr, Clause *c) {
-        cout << "Creating substitution child\n";
+if(DEBUG)cout << "Creating substitution child\n";
         Substitution *newSub = new Substitution(nFree);
         vector<Variable*> concreteArgs = bexpr->getArgs();
         vector<Variable*> declaredArgs = c->getArgs();

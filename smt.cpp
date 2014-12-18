@@ -5,6 +5,7 @@
 #include <sstream>
 #include "z3.h"
 #include "verFile.h"
+#include "DEBUG.h"
 #include "NodeBuilder.h"
 #include "EvaluatorVisitor.h"
 #include "EvaluationResult.h"
@@ -31,9 +32,8 @@ Z3_lbool checkZ3(Z3_context &ctx, Z3_ast &ast) {
 
 int main(int argc, char* argv[])
 {
-//    int threshold = (argc > 0)?atoi(argv[0]) + 1:10;
-    int threshold = 3;
-    cout << "Loop unroll threshold: " << threshold << "\n";
+    int threshold = (argc > 0)?atoi(argv[0]) + 1:5;
+if(DEBUG)cout << "Loop unroll threshold: " << threshold << "\n";
     Z3_config cfg;
     Z3_context ctx;
     Z3_sort realSort, boolSort;

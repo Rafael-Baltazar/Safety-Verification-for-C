@@ -36,7 +36,7 @@ public:
 
     // pre: bexpr->getType() == ClBExpr
     void addUseCount(BExpr *bexpr) {
-        cout << "Adding use count to: " << bexpr->getClauseName() << "\n";
+if(DEBUG)cout << "Adding use count to: " << bexpr->getClauseName() << "\n";
         string cId = getClauseId(bexpr);
         if(clauseUses->count(cId) > 0) {
             (*clauseUses)[cId] += 1;
@@ -50,7 +50,7 @@ public:
     }
 
     ClauseUse *createChild(BExpr *bexpr) {
-        cout << "Creating clauseUse child\n";
+if(DEBUG)cout << "Creating clauseUse child\n";
         ClauseUse *cU = new ClauseUse();
         cU->copyClauseUses(clauseUses);
         cU->addUseCount(bexpr);

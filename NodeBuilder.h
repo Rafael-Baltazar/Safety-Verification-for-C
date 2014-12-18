@@ -41,7 +41,7 @@ public:
 
     // pre: bexpr->getType() == ClBExpr;
     ClauseNode *buildClause(BExpr* bexpr, BuildContext *ctx) {
-        cout << "Buildind clause\n";
+if(DEBUG)cout << "Buildind clause\n";
         int useCount = ctx->findUseCount(bexpr);
         ClauseNode *clause = new ClauseNode();
         clause->setUseCount(useCount);
@@ -59,7 +59,7 @@ public:
     }
 
     ConjunctionNode *buildConjunction(vector<BExpr*> *bexprs, BuildContext *ctx) {
-        cout << "Buildind conjunction\n";
+if(DEBUG)cout << "Buildind conjunction\n";
         ConjunctionNode *conjunction = new ConjunctionNode();
         for(vector<BExpr*>::iterator it = bexprs->begin(); it != bexprs->end(); it++) {
             BExpr *bexpr = *it;
@@ -76,7 +76,7 @@ public:
 
     // pre: bexpr->getType() != ClBExpr;
     BooleanNode *buildBoolean(BExpr *bexpr, BuildContext *ctx) {
-        cout << "Buildind boolean\n";
+if(DEBUG)cout << "Buildind boolean\n";
         return new BooleanNode(bexpr, ctx->getSubstitution());
     }
 };

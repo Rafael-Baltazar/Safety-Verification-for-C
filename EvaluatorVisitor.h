@@ -28,11 +28,11 @@ private:
     }
 
     EvaluationResult *evalExpr(Expr *expr, Substitution *substitution) {
-        cout << "Evaluating expression: ";
+if(DEBUG)cout << "Evaluating expression: ";
         EvaluationResult *result, *left, *right;
         ExprType type = expr->getType();
         if(type == SumExpr) {
-            cout << "+\n";
+if(DEBUG)cout << "+\n";
             left = evalExpr(expr->getLeft(), substitution);
             right = evalExpr(expr->getRight(), substitution);
             if(left->isOk() && right->isOk()) {
@@ -44,7 +44,7 @@ private:
                 result = new EvaluationResult(Error);
             }
         } else if(type == SubExpr) {
-            cout << "-\n";
+if(DEBUG)cout << "-\n";
             left = evalExpr(expr->getLeft(), substitution);
             right = evalExpr(expr->getRight(), substitution);
             if(left->isOk() && right->isOk()) {
@@ -56,7 +56,7 @@ private:
                 result = new EvaluationResult(Error);
             }
         } else if(type == MulExpr) {
-            cout << "*\n";
+if(DEBUG)cout << "*\n";
             left = evalExpr(expr->getLeft(), substitution);
             right = evalExpr(expr->getRight(), substitution);
             if(left->isOk() && right->isOk()) {
@@ -68,7 +68,7 @@ private:
                 result = new EvaluationResult(Error);
             }
         } else if(type == DivExpr) {
-            cout << "/\n";
+if(DEBUG)cout << "/\n";
             left = evalExpr(expr->getLeft(), substitution);
             right = evalExpr(expr->getRight(), substitution);
             if(left->isOk() && right->isOk()) {
@@ -80,20 +80,20 @@ private:
                 result = new EvaluationResult(Error);
             }
         } else if(type == ConExpr) {
-            cout << expr->getVal() << " val\n";
+if(DEBUG)cout << expr->getVal() << " val\n";
             const char *val = toString(expr->getVal()).c_str();
             result = new EvaluationResult(Z3_mk_numeral(*ctx, val, *realSort));
         } else if(type == VarExpr) {
             string declaredName = expr->getVar()->getName();
-            cout << declaredName << " dn, ";
+if(DEBUG)cout << declaredName << " dn, ";
             string concreteName = substitution->findConcreteName(declaredName);
-            cout << concreteName << " cn\n";
+if(DEBUG)cout << concreteName << " cn\n";
             const char *var = concreteName.c_str();
             result = new EvaluationResult(Z3_mk_const(*ctx, Z3_mk_string_symbol(*ctx, var), *realSort));
         } else {
             result = new EvaluationResult(Error);
         }
-cout << result << "\n";
+if(DEBUG)cout << result << "\n";
         return result;
     }
 public:
@@ -108,9 +108,9 @@ public:
     }
 
     EvaluationResult *evalClause(ClauseNode *clause){
-        cout << "Evaluating clause\n";
+if(DEBUG)cout << "Evaluating clause\n";
         if(clause->getUseCount() > threshold) {
-            cout << "Evaluated  clause: LoopUnrollThreshold\n";
+if(DEBUG)cout << "Evaluated  clause: LoopUnrollThreshold\n";
             return new EvaluationResult(LoopUnrollThreshold);
         }
 
@@ -123,22 +123,22 @@ public:
             if(type == Ok) {
                 results->push_back(result);
             } else if(type == Error) {
-                cout << "Evaluated  clause: Error\n";
+if(DEBUG)cout << "Evaluated  clause: Error\n";
                 return new EvaluationResult(Error);
             }
         }
 
         if(results->size() == 0) {
-            cout << "Evaluated  clause: all sub-nodes are loopUnrollThreshold\n";
+if(DEBUG)cout << "Evaluated  clause: all sub-nodes are loopUnrollThreshold\n";
             return new EvaluationResult(LoopUnrollThreshold);
         }
 
-        cout << "Ok nodes: " << results->size() << "\n";
+if(DEBUG)cout << "Ok nodes: " << results->size() << "\n";
         Z3_ast args[2], *prev = NULL;// not in heap
         for(vector<EvaluationResult*>::iterator it = results->begin(); it != results->end(); it++) {
             EvaluationResult *eR = *it;
             Z3_ast *a = eR->getAst();
-cout << "bexpr: " << *a << "\n";
+if(DEBUG)cout << "bexpr: " << *a << "\n";
             if(prev != NULL) {
                 args[0] = *prev;
                 args[1] = *a;
@@ -146,14 +146,14 @@ cout << "bexpr: " << *a << "\n";
             }
             prev = a;
         }
-        cout << "Evaluated  clause\n";
+if(DEBUG)cout << "Evaluated  clause\n";
         return new EvaluationResult(*prev);
     }
 
     EvaluationResult *evalConjunction(ConjunctionNode *conjunction){
-        cout << "Evaluating conjunction\n";
+if(DEBUG)cout << "Evaluating conjunction\n";
         vector<Node*> *nodes = conjunction->getNodes();
-        cout << "Nodes: " << nodes->size() << "\n";
+if(DEBUG)cout << "Nodes: " << nodes->size() << "\n";
         Z3_ast *args = new Z3_ast[nodes->size()];
         uint i = 0;
         for(vector<Node*>::iterator it = nodes->begin(); it != nodes->end() && i < nodes->size(); it++, i++) {
@@ -163,33 +163,33 @@ cout << "bexpr: " << *a << "\n";
             if(type == Ok) {
                 Z3_ast *a = result->getAst();
                 args[i] = *a;
-cout << "after indexing args: " << i << ": " << args[i] << "\n";
+if(DEBUG)cout << "after indexing args: " << i << ": " << args[i] << "\n";
             } else if(type == LoopUnrollThreshold) {
-                cout << "Evaluated  conjunction: loopUnrollThreshold\n";
+if(DEBUG)cout << "Evaluated  conjunction: loopUnrollThreshold\n";
                 return new EvaluationResult(LoopUnrollThreshold);
             } else {
-                cout << "Evaluated  conjunction: Error\n";
+if(DEBUG)cout << "Evaluated  conjunction: Error\n";
                 return new EvaluationResult(Error);
             }
         }
         if(nodes->size() > 1) {
-            cout << "Evaluated  conjunction and\n";
+if(DEBUG)cout << "Evaluated  conjunction and\n";
             return new EvaluationResult(Z3_mk_and(*ctx, nodes->size(), args));
         } else {
-            cout << "Evaluated  conjunction single\n";
+if(DEBUG)cout << "Evaluated  conjunction single\n";
             return new EvaluationResult(args[0]);
         }
     }
 
     // pre: boolean->getBExpr()->getType != ClBExpr
     EvaluationResult *evalBoolean(BooleanNode *boolean){
-        cout << "Evaluating boolean: ";
+if(DEBUG)cout << "Evaluating boolean: ";
         EvaluationResult *result, *left, *right;
         Substitution *substitution = boolean->getSubstitution();
         BExpr *bexpr = boolean->getBExpr();
         BExprType type = bexpr->getType();
         if(type == EqBExpr) {
-            cout << "=\n";
+if(DEBUG)cout << "=\n";
             left = evalExpr(bexpr->getLeft(), substitution);
             right = evalExpr(bexpr->getRight(), substitution);
             if(left->isOk() && right->isOk()) {
@@ -200,7 +200,7 @@ cout << "after indexing args: " << i << ": " << args[i] << "\n";
                 result = new EvaluationResult(Error);
             }
         } else if(type == NeBExpr) {
-            cout << "!=\n";
+if(DEBUG)cout << "!=\n";
             left = evalExpr(bexpr->getLeft(), substitution);
             right = evalExpr(bexpr->getRight(), substitution);
             if(left->isOk() && right->isOk()) {
@@ -211,7 +211,7 @@ cout << "after indexing args: " << i << ": " << args[i] << "\n";
                 result = new EvaluationResult(Error);
             }
         } else if(type == LtBExpr) {
-            cout << "<\n";
+if(DEBUG)cout << "<\n";
             left = evalExpr(bexpr->getLeft(), substitution);
             right = evalExpr(bexpr->getRight(), substitution);
             if(left->isOk() && right->isOk()) {
@@ -222,7 +222,7 @@ cout << "after indexing args: " << i << ": " << args[i] << "\n";
                 result = new EvaluationResult(Error);
             }
         } else if(type == GtBExpr) {
-            cout << ">\n";
+if(DEBUG)cout << ">\n";
             left = evalExpr(bexpr->getLeft(), substitution);
             right = evalExpr(bexpr->getRight(), substitution);
             if(left->isOk() && right->isOk()) {
@@ -233,20 +233,20 @@ cout << "after indexing args: " << i << ": " << args[i] << "\n";
                 result = new EvaluationResult(Error);
             }
         } else if(type == LeBExpr) {
-            cout << "<=\n";
+if(DEBUG)cout << "<=\n";
             left = evalExpr(bexpr->getLeft(), substitution);
             right = evalExpr(bexpr->getRight(), substitution);
             if(left->isOk() && right->isOk()) {
                 Z3_ast *la = left->getAst();
-cout << "left: " << *la << "\n";
+if(DEBUG)cout << "left: " << *la << "\n";
                 Z3_ast *ra = right->getAst();
-cout << "right: " << *ra << "\n";
+if(DEBUG)cout << "right: " << *ra << "\n";
                 result = new EvaluationResult(Z3_mk_le(*ctx, *la, *ra));
             } else {
                 result = new EvaluationResult(Error);
             }
         } else if(type == GeBExpr) {
-            cout << ">=\n";
+if(DEBUG)cout << ">=\n";
             left = evalExpr(bexpr->getLeft(), substitution);
             right = evalExpr(bexpr->getRight(), substitution);
             if(left->isOk() && right->isOk()) {
@@ -259,7 +259,7 @@ cout << "right: " << *ra << "\n";
         } else {
             result = new EvaluationResult(Error);
         }
-        cout << "Evaluated  boolean\n";
+if(DEBUG)cout << "Evaluated  boolean\n";
         return result;
     }
 };
