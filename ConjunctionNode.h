@@ -14,8 +14,13 @@ public:
     ConjunctionNode() {
         children = new vector<Node*>();
     }
+
     EvaluationResult *accept(NodeVisitor *visitor, EvaluationContext *context) {
         return visitor->evalConjunction(this, context);
+    }
+
+    void add(Node *n) {
+        children->push_back(n);
     }
 };
 
