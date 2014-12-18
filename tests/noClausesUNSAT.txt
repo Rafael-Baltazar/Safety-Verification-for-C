@@ -1,1 +1,1 @@
-false :- X < 10, X = 10.
+false :- X > 0.

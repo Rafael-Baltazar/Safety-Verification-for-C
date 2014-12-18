@@ -12,14 +12,13 @@ private:
     Substitution *sub;
     ClauseUse *clUse;
 public:
-    BuildContext(int nF) {
-        sub = new Substitution(&nF);
-        clUse = new ClauseUse();
-    }
-
     BuildContext(Substitution *s, ClauseUse *cU) {
         sub = s;
         clUse = cU;
+    }
+
+    int findUseCount(BExpr *bexpr) {
+        return clUse->findUseCount(bexpr);
     }
 
     // pre: bexpr->getType() == ClBExpr;
@@ -27,6 +26,10 @@ public:
         Substitution *s = sub->createChild(bexpr, c);
         ClauseUse *cU = clUse->createChild(bexpr);
         return new BuildContext(s, cU);
+    }
+
+    Substitution *getSubstitution() {
+        return sub;
     }
 };
 

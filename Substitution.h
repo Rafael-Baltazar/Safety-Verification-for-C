@@ -20,25 +20,46 @@ private:
 
     string createFreeVar() {
         string newVar = "v" + toString(*nFree);
+//        cout << "Created var: " << newVar << "\n";
         (*nFree)++;
         return newVar;
     }
-public:
+
+    void findConcreteForAllVars(Clause *c, Substitution *s) {
+        vector<Variable*> *allVars = (new FindAllVars())->findClause(c);
+        for(vector<Variable*>::iterator it = allVars->begin(); it != allVars->end(); it++) {
+            string varName = (*it)->getName();
+            s->findConcreteName(varName);//Ignore return value;
+        }
+    }
+
     Substitution(int *nF) {
         boundVars = new map<string, string>();
         vars = new map<string, string>();
         nFree = nF;
     }
+public:
+    Substitution(int *nF, Clause *c) {
+        boundVars = new map<string, string>();
+        vars = new map<string, string>();
+        nFree = nF;
+        findConcreteForAllVars(c, this);
+    }
 
     string findConcreteName(string declaredName) {
-        cout << "Finding concrete name for: " << declaredName << "\n";
+//        cout << "Finding concrete name for: " << declaredName << "\n";
         if(boundVars->count(declaredName) > 0) {
-            return (*boundVars)[declaredName];
+            string concreteName = (*boundVars)[declaredName];
+//            cout << "Found bound name: " << concreteName << "\n";
+            return concreteName;
         } else if(vars->count(declaredName) > 0) {
-            return (*vars)[declaredName];
+            string concreteName = (*vars)[declaredName];
+//            cout << "Found free name: " << concreteName << "\n";
+            return concreteName;
         } else {
             string newVar = createFreeVar();
             (*vars)[declaredName] = newVar;
+//            cout << "Found new name: " << newVar << "\n";
             return newVar;
         }
     }
@@ -65,11 +86,7 @@ public:
             string concreteName = findConcreteName(semiConcreteName);
             newSub->addSub(concreteName, declaredName);
         }
-        vector<Variable*> *allVars = (new FindAllVars())->findClause(c);
-        for(vector<Variable*>::iterator it = allVars->begin(); it != allVars->end(); it++) {
-            string varName = (*it)->getName();
-            newSub->findConcreteName(varName);//Ignore return value;
-        }
+        findConcreteForAllVars(c, newSub);
         return newSub;
     }
 };

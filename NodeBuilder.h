@@ -12,7 +12,7 @@ using namespace ver;
 
 class NodeBuilder {
 private:
-    int loopUnroll, nFree;
+    int threshold, nFree;
     File *file;
 
     vector<Clause*> *findClausesByName(string name) {
@@ -27,29 +27,33 @@ private:
     }
 public:
     NodeBuilder(int k, File* f) {
-        loopUnroll = k;
+        threshold = k;
         file = f;
     }
 
     Node *build(Clause *c) {
         vector<BExpr*> bexprs = c->getBExprs();
         nFree = 0;
-        return buildConjunction(&bexprs, new BuildContext(nFree));
+        Substitution *s = new Substitution(&nFree, c);
+        ClauseUse *cU = new ClauseUse();
+        return buildConjunction(&bexprs, new BuildContext(s, cU));
     }
 
     // pre: bexpr->getType() == ClBExpr;
     ClauseNode *buildClause(BExpr* bexpr, BuildContext *ctx) {
         cout << "Buildind clause\n";
+        int useCount = ctx->findUseCount(bexpr);
         ClauseNode *clause = new ClauseNode();
-        vector<Clause*> *clauses = findClausesByName(bexpr->getClauseName());
-        for(vector<Clause*>::iterator it = clauses->begin(); it != clauses->end(); it++) {
-            Clause *c = *it;
-            // new ctx
-            BuildContext *newCtx = ctx->createChild(bexpr, c);
-            // buildConjunction + clause->add
-            vector<BExpr*> bexprs = c->getBExprs();
-            Node *node = buildConjunction(&bexprs, newCtx);
-            clause->add(node);
+        clause->setUseCount(useCount);
+        if(useCount <= threshold) {
+            vector<Clause*> *clauses = findClausesByName(bexpr->getClauseName());
+            for(vector<Clause*>::iterator it = clauses->begin(); it != clauses->end(); it++) {
+                Clause *c = *it;
+                vector<BExpr*> bexprs = c->getBExprs();
+                BuildContext *newCtx = ctx->createChild(bexpr, c); // new ctx
+                Node *node = buildConjunction(&bexprs, newCtx);
+                clause->add(node);
+            }
         }
         return clause;
     }
@@ -73,7 +77,7 @@ public:
     // pre: bexpr->getType() != ClBExpr;
     BooleanNode *buildBoolean(BExpr *bexpr, BuildContext *ctx) {
         cout << "Buildind boolean\n";
-        return new BooleanNode(bexpr);
+        return new BooleanNode(bexpr, ctx->getSubstitution());
     }
 };
 

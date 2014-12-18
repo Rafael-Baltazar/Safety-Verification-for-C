@@ -15,12 +15,16 @@ public:
         children = new vector<Node*>();
     }
 
-    EvaluationResult *accept(NodeVisitor *visitor, EvaluationContext *context) {
-        return visitor->evalConjunction(this, context);
+    EvaluationResult *accept(NodeVisitor *visitor) {
+        return visitor->evalConjunction(this);
     }
 
     void add(Node *n) {
         children->push_back(n);
+    }
+
+    vector<Node*> *getNodes() {
+        return children;
     }
 };
 

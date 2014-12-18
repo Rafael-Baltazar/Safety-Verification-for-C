@@ -5,8 +5,8 @@ using namespace std;
 
 typedef enum {
     Ok = 0,
-    Error = 2,
-    LoopUnrollThreshold = 1
+    Error = 1,
+    LoopUnrollThreshold = 2
 } EvalResultType;
 
 class EvaluationResult {
@@ -20,6 +20,11 @@ public:
 
     EvaluationResult(EvalResultType type) {
         resultType = type;
+    }
+
+    EvaluationResult(Z3_ast *t) {
+        resultType = Ok;
+        tree = t;
     }
 
     bool isOk() {

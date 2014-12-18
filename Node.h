@@ -4,10 +4,11 @@
 class EvaluationResult;
 class NodeVisitor;
 class EvaluationContext;
+class Substitution;
 
 class Node {
 public:
-    virtual EvaluationResult *accept(NodeVisitor *visitor, EvaluationContext *context) = 0;
+    virtual EvaluationResult *accept(NodeVisitor *visitor) = 0;
 };
 
 #endif

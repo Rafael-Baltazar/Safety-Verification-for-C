@@ -9,28 +9,32 @@ class EvaluationContext;
 
 class ClauseNode : public Node {
 private:
-    int loopUnroll;
+    int useCount;
     vector<Node*> *children;
 public:
     ClauseNode() {
-        loopUnroll = 0;
+        useCount = 0;
         children = new vector<Node*>();
     }
 
-    EvaluationResult *accept(NodeVisitor *visitor, EvaluationContext *context) {
-        return visitor->evalClause(this, context);
+    EvaluationResult *accept(NodeVisitor *visitor) {
+        return visitor->evalClause(this);
     }
 
     void add(Node *n) {
         children->push_back(n);
     }
 
-    int getLoopUnroll() {
-        return loopUnroll;
+    vector<Node*> *getNodes() {
+        return children;
     }
 
-    void setLoopUnroll(int i) {
-        loopUnroll = i;
+    int getUseCount() {
+        return useCount;
+    }
+
+    void setUseCount(int i) {
+        useCount = i;
     }
 };
 
