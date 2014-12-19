@@ -1,9 +1,10 @@
 #!/bin/bash
 
-PARSER="$HOME/proj-dvs/project-sdk/parser"
-Z3="$HOME/proj-dvs/project-sdk/z3-4.3.2"
+DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+Z3DIR="$HOME/z3-4.3.2"
+PARSERDIR="$DIR/parser"
 
-export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$PARSER:$Z3/lib
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PARSER:$Z3/lib
+export DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH:$PARSERDIR:$Z3DIR/lib
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$PARSERDIR:$Z3DIR/lib
 
 ./smt $*
