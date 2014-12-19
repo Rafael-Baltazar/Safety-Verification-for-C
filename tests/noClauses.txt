@@ -1,1 +1,0 @@
-false :- X < 10, Y = J + X, Y - J = X, X * Y = 10.

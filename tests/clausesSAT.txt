@@ -1,3 +1,4 @@
-h1(Z) :- Z =< 0.
-h1(X) :- h1(X1), X > 0, X = X1 + 1.
-false :- h1(W), W > 0.
+h1(X,Y,I) :- Y=1.
+h2(X2,Y,I) :- h1(X,Y,I), I<0, X2=0-I.
+h2(X2,Y,I) :- h1(X,Y,I), I>=0, X2=I.
+false :- h2(X,Y,I), X+Y<0.

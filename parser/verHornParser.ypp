@@ -1,0 +1,126 @@
+%{
+
+#include <iostream>
+#include <string>
+#include <vector>
+#include <map>
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "verHornLexer.h"
+#include "verVariable.h"
+#include "verClause.h"
+#include "verExpr.h"
+#include "verBExpr.h"
+#include "verFile.h"
+
+using namespace std;
+using namespace ver;
+
+int yyerror(char *s);
+
+extern int yylex();
+extern int yy_scan_string(const char *yy_str);
+
+std::vector<ver::Variable*> _args;
+
+ver::File* _file;
+ver::Clause* _clause;
+
+#define YYPARSE_PARAM param
+
+%}
+
+%union {
+		char name[255];
+		int value;
+		ver::ExprType exprType;
+		ver::BExprType bexprType;
+		ver::Variable* variable;
+		ver::Clause* clause;
+		ver::BExpr* bexpr;
+		ver::Expr* expr;
+}
+
+%token <name> VARIABLE
+%token <name> CLAUSE
+%token <value> NUMBER
+%token IMPL
+%token <clause> FALSE
+%token <exprType> ARITHOP
+%token <bexprType> COMPOP
+
+%type <bexpr> bool_expr
+%type <expr> expr
+%type <args> args
+
+%left '+'
+%left '-'
+%left '*'
+%left '/'
+
+%%
+file: { _file = (ver::File*) param; _clause = _file->getCurrentClause(); } clauses
+{ }
+;
+
+clauses: clauses clause
+	{ }
+	| clause
+	{ }
+	;
+
+clause: head IMPL bool_exprs '.'
+	{ _clause = _file->nextClause(); }
+	;
+
+head: FALSE
+	{ _clause->setName("false"); }
+	| CLAUSE '(' args ')'
+	{ _clause->setName($1);
+      for(int i = 0; i < _args.size(); i++)
+		  _clause->addArg(_args[i]);
+	  _args.clear();
+	}
+	;
+
+args: VARIABLE
+	{ _args.push_back(_clause->getVar($1)); }
+	| args ',' VARIABLE
+	{ _args.push_back(_clause->getVar($3)); }
+	;
+
+bool_exprs: bool_expr
+	{ _clause->addBExpr($1); }
+	| bool_exprs ',' bool_expr
+	{ _clause->addBExpr($3); }
+	;
+
+bool_expr: CLAUSE '(' args ')'
+	{ BExpr* be = new BExpr(ClBExpr); $$ = be;
+	  be->setClauseName($1);
+      for(int i = 0; i < _args.size(); i++)
+		  be->addArg(_args[i]);
+	  _args.clear(); }
+	| expr COMPOP expr
+	{ $$ = new BExpr($2, $1, $3); }
+	;
+
+expr: VARIABLE
+	{ $$ = new Expr(_clause->getVar($1)); }
+	| NUMBER
+	{ $$ = new Expr($1); }
+	| ARITHOP expr
+	{ $$ = new Expr($1, new Expr(0), $2); }
+	| expr ARITHOP expr
+	{ $$ = new Expr($2, $1, $3); }
+	;
+
+%%
+
+int yyerror(char *s) {
+    cout << "Error: " << s << endl;
+	return 0;
+}

@@ -73,7 +73,7 @@ if(DEBUG)cout << "Loop unroll threshold: " << threshold << "\n";
             }
         } else {
             end = true;
-            cout << "UNDEF\n";
+            cout << "Error found. Possibly found a ErrExpr or a ErrBExpr or hit loop unroll threshold for every expanded clause.\n";
         }
         delete nb;
 //        delete n;

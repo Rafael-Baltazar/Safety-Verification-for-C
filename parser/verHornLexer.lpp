@@ -1,0 +1,91 @@
+%{
+
+#include <iostream>
+#include <cstring>
+
+#include "verVariable.h"
+#include "verClause.h"
+#include "verExpr.h"
+#include "verBExpr.h"
+#include "verHornParser.hpp"
+
+void yyerror(const char *msg) {
+    std::cerr << "Parse error" << std::endl;
+}
+
+%}
+
+%option noyywrap nounput
+
+%%
+
+"false" {
+	return FALSE;
+}
+
+":-" {
+	return IMPL;
+}
+
+"=" {
+	yylval.bexprType = ver::EqBExpr;
+    return COMPOP;
+}
+
+"=\=" {
+	yylval.bexprType = ver::NeBExpr;
+	return COMPOP;
+}
+
+"<" {
+	yylval.bexprType = ver::LtBExpr;
+	return COMPOP;
+}
+
+">" {
+	yylval.bexprType = ver::GtBExpr;
+	return COMPOP;
+}
+
+"=<" {
+	yylval.bexprType = ver::LeBExpr;
+	return COMPOP;
+}
+
+">=" {
+	yylval.bexprType = ver::GeBExpr;
+	return COMPOP;
+}
+
+"+"|"-"|"*"|"/" {
+	if(yytext[0] == '+')
+		yylval.exprType = ver::SumExpr;
+	else if(yytext[0] == '-')
+		yylval.exprType = ver::SubExpr;
+	else if(yytext[0] == '*')
+		yylval.exprType = ver::MulExpr;
+	else if(yytext[0] == '/')
+		yylval.exprType = ver::DivExpr;
+	return ARITHOP;
+}
+
+h[0-9]+ {
+    strcpy(yylval.name, yytext);
+    return CLAUSE;
+}
+
+[A-Za-z][0-9A-Za-z_]* {
+    strcpy(yylval.name, yytext);
+    return VARIABLE;
+}
+
+[0-9]+ {
+	yylval.value = atoi(yytext);
+	return NUMBER;
+}
+
+[ \t\n]* { }
+
+. { return yytext[0]; }
+
+%%

@@ -1,6 +1,6 @@
 UNAME=$(shell uname)
-Z3DIR=../project-sdk/z3-4.3.2
-PARSERDIR=../project-sdk/parser
+Z3DIR=../z3-4.3.2
+PARSERDIR=./parser
 
 ifeq ($(UNAME), Darwin)
 CC=clang++
